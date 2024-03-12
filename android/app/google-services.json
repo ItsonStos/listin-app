@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "356323883967",
+    "project_id": "listin-app-49d1c",
+    "storage_bucket": "listin-app-49d1c.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:356323883967:android:a7a421ada33ccc45157f0a",
+        "android_client_info": {
+          "package_name": "com.example.listin_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpjfOwp4hZ4pFIBerS9BHfEMQOnK0z08o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
