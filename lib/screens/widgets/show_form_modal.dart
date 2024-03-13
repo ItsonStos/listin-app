@@ -1,29 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:listin_app/helpers/firestore_analytics_helpers.dart';
 import 'package:listin_app/models/listin_model.dart';
 import 'package:uuid/uuid.dart';
 
-class ShowFormModal extends StatefulWidget {
-  const ShowFormModal({super.key});
-
-  @override
-  State<ShowFormModal> createState() => _ShowFormModalState();
-}
-
-class _ShowFormModalState extends State<ShowFormModal> {
+class ShowFormModal {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+  TextEditingController nameController = TextEditingController();
+  FirestoreAnalyticsHelpers analytics = FirestoreAnalyticsHelpers();
 
-  @override
-  Widget build(BuildContext context) {
-    return const SizedBox();
-  }
+  String title = 'Adicionar Listin';
+  String confirmationButton = 'Salvar';
+  String skipButton = 'Cancelar';
 
-  showFormModal() {
-    String title = 'Adicionar Listin';
-    String confirmationButton = 'Salvar';
-    String skipButton = 'Cancelar';
-
-    TextEditingController nameController = TextEditingController();
+  showFormModal(context, Function refreshCallback, {ListinModel? model}) {
+    if (model != null) {
+      title = "Editando ${model.name}";
+      //listin.id = model.id;
+      nameController.text = model.name;
+    }
 
     showModalBottomSheet(
       context: context,
@@ -65,14 +60,9 @@ class _ShowFormModalState extends State<ShowFormModal> {
                   ),
                   ElevatedButton(
                     onPressed: () {
-                      ListinModel listin = ListinModel(
-                        id: const Uuid().v1(),
-                        name: nameController.text,
-                      );
-
-                      firestore.collection(listin.id).doc(listin.name).set(
-                            listin.toMap(),
-                          );
+                      _saveToListin(nameController.text.trim());
+                      refreshCallback();
+                      analytics.incrementarListasAdicionadas();
 
                       Navigator.pop(context);
                     },
@@ -85,5 +75,26 @@ class _ShowFormModalState extends State<ShowFormModal> {
         );
       },
     );
+  }
+
+  void _saveToListin(String name, {ListinModel? model}) {
+    if (name.isNotEmpty) {
+      final String id = const Uuid().v1();
+      final ListinModel listin = ListinModel(id: id, name: nameController.text);
+
+      if (model != null) {
+        listin.id = model.id;
+      }
+
+      firestore.collection('listins').doc(listin.id).set(listin.toMap());
+    }
+  }
+
+  void editListin(ListinModel? model) {
+    if (model != null) {
+      title = "Editando ${model.name}";
+      //listin.id = model.id;
+      nameController.text = model.name;
+    }
   }
 }
