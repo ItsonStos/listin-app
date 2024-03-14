@@ -13,12 +13,10 @@ class ShowFormModal {
   String confirmationButton = 'Salvar';
   String skipButton = 'Cancelar';
 
+  ListinModel? editingModel;
+
   showFormModal(context, Function refreshCallback, {ListinModel? model}) {
-    if (model != null) {
-      title = "Editando ${model.name}";
-      //listin.id = model.id;
-      nameController.text = model.name;
-    }
+    _editToListin(model);
 
     showModalBottomSheet(
       context: context,
@@ -59,17 +57,21 @@ class ShowFormModal {
                     width: 16,
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      _saveToListin(nameController.text.trim());
-                      refreshCallback();
-                      analytics.incrementarListasAdicionadas();
-
+                    onPressed: () async {
+                      if (editingModel != null) {
+                        _editItem();
+                      } else {
+                        _addItem();
+                      }
                       Navigator.pop(context);
+
+                      analytics.incrementarListasAdicionadas();
+                      refreshCallback();
                     },
                     child: Text(confirmationButton),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         );
@@ -77,24 +79,24 @@ class ShowFormModal {
     );
   }
 
-  void _saveToListin(String name, {ListinModel? model}) {
-    if (name.isNotEmpty) {
-      final String id = const Uuid().v1();
-      final ListinModel listin = ListinModel(id: id, name: nameController.text);
+  void _addItem() {
+    final String id = const Uuid().v1();
+    final ListinModel listin = ListinModel(id: id, name: nameController.text);
+    firestore.collection('listins').doc(listin.id).set(listin.toMap());
+  }
 
-      if (model != null) {
-        listin.id = model.id;
-      }
-
-      firestore.collection('listins').doc(listin.id).set(listin.toMap());
+  void _editItem() {
+    if (editingModel != null) {
+      editingModel!.name = nameController.text;
+      firestore.collection('listins').doc(editingModel!.id).set(editingModel!.toMap());
     }
   }
 
-  void editListin(ListinModel? model) {
+  void _editToListin(ListinModel? model) {
     if (model != null) {
       title = "Editando ${model.name}";
-      //listin.id = model.id;
       nameController.text = model.name;
+      editingModel = model;
     }
   }
 }

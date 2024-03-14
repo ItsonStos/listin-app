@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:listin_app/datasources/data_source.dart';
 import 'package:listin_app/helpers/firestore_analytics_helpers.dart';
 import 'package:listin_app/models/listin_model.dart';
 import 'package:listin_app/screens/widgets/listin_tile.dart';
@@ -13,9 +14,10 @@ class HomeScreem extends StatefulWidget {
 }
 
 class _HomeScreemState extends State<HomeScreem> {
+  final ListinDataSource _dataSource = ListinDataSource();
   List<ListinModel> listListins = [];
   FirebaseFirestore firestore = FirebaseFirestore.instance;
-  ListinModel? model;
+  ListinModel? editinModel;
 
   FirestoreAnalyticsHelpers analytics = FirestoreAnalyticsHelpers();
 
@@ -57,10 +59,63 @@ class _HomeScreemState extends State<HomeScreem> {
                   listListins.length,
                   (index) {
                     ListinModel model = listListins[index];
-                    return ListinTile(
-                      icon: const Icon(Icons.list_alt_rounded),
-                      id: model.id,
-                      name: model.name,
+                    return Dismissible(
+                      key: ValueKey<ListinModel>(model),
+                      direction: DismissDirection.horizontal,
+                      confirmDismiss: (direction) async {
+                        direction == DismissDirection.endToStart
+                            ? showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Deseja deletar?'),
+                                    content: const Text("Certeza que deseja deletar esse item?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          _removListin(model);
+                                          Navigator.pop(context);
+
+                                          refresh();
+                                        },
+                                        child: const Text("Sim"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("Cancelar"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              )
+                            : ShowFormModal().showFormModal(context, refresh, model: model);
+                        return null;
+                      },
+                      background: Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(left: 8),
+                        color: Colors.blueGrey,
+                        child: const Icon(
+                          Icons.edit,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                      ),
+                      secondaryBackground: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 8),
+                        color: Colors.red,
+                        child: const Icon(
+                          Icons.delete,
+                          size: 40,
+                          color: Colors.white,
+                        ),
+                      ),
+                      child: ListinTile(
+                        icon: const Icon(Icons.list_alt_rounded),
+                        id: model.id,
+                        name: model.name,
+                      ),
                     );
                   },
                 ),
@@ -69,7 +124,7 @@ class _HomeScreemState extends State<HomeScreem> {
     );
   }
 
-  refresh() async {
+  Future<void> refresh() async {
     List<ListinModel> temp = [];
     QuerySnapshot<Map<String, dynamic>> snapshot = await firestore.collection('listins').get();
 
@@ -82,7 +137,10 @@ class _HomeScreemState extends State<HomeScreem> {
     });
   }
 
-  void removListin(ListinModel model) {
-    firestore.collection('listin').doc(model.id).delete();
+  void _removListin(ListinModel model) async {
+    await firestore.collection('listins').doc(model.id).delete();
+    setState(() {
+      listListins.remove(model);
+    });
   }
 }
